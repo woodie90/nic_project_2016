@@ -6,7 +6,11 @@
 \usepackage{multirow}
 \usepackage{ragged2e}
 \usepackage{amsmath}
-\usepackage{tikz}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+\input{commands}
+
 \begin{document}
 
 \title{Investigation of Nature Inspired Algorithms in a practical context by exploiting the characteristics of Braitenberg Vehicle Concepts}
@@ -36,19 +40,7 @@ For this project the educational robot e-puck is used to serve as a Braitenberg 
 
 \begin{figure}[hbt]
 	\centering
-	\begin{tikzpicture}
-		\draw (0,0) circle [radius=2.5];
-		\draw (1,-0.3) rectangle (2,0.3);
-		\draw (-1,-0.3) rectangle (-2,0.3);
-		\draw [thick](-7.5:2.3) -- (7.5:2.3);
-		\draw [thick](35:2.3) -- (50:2.3);
-		\draw [thick](65:2.3) -- (80:2.3);
-		\draw [thick](100:2.3) -- (115:2.3);
-		\draw [thick](130:2.3) -- (145:2.3);
-		\draw [thick](172.5:2.3) -- (187.5:2.3);
-		\draw [thick](230:2.3) -- (245:2.3);
-		\draw [thick](295:2.3) -- (310:2.3);
-	\end{tikzpicture}
+	\input{epucksketch}
 	\caption{Sketch of the e-puck robot, with motors, sensors and weights}
 	\label{fig:epuck}
 \end{figure}
