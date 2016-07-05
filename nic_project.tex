@@ -1,13 +1,16 @@
-\documentclass[a4paper]{jacow}
+\documentclass[a4paper]{article}
 
 \usepackage[utf8]{inputenc}
-\usepackage[USenglish]{babel}			 
+\usepackage[english]{babel}			 
 \usepackage[final]{pdfpages}
+\usepackage{lmodern}
 \usepackage{multirow}
 \usepackage{ragged2e}
-\usepackage{amsmath}
+\usepackage{amsmath, amssymb}
 \usepackage{tikz}
 \usepackage{xcolor}
+\usepackage{siunitx}
+
 
 \input{commands}
 
@@ -27,25 +30,60 @@
 \end{abstract}
 
 \section{The Braitenberg Vehicle}
-The term Braitenberg Vehicle is used to describe a vehicle, which is able to move autonomously only by considering primitive sensor inputs (e.g. proximity, gas or light sensors). It also includes two independent controllable motors and two biases, one for each motor, to ensure a continuous motor movement in case that the vehicle reaches a position, where all sensor inputs become zero.
 
-The values collected by the sensors are weighted and superimposed for each motor individually, whereby the symmetry characteristics of the sensor positions can be exploited, i.e. the weight vector of the first motor can be turned upside down to fit the second motor. Equation~\ref{eq:motorequation} represents this principle, where the index $n$ describes the number of the motor and $i$ the number of the individual sensor.
+The term Braitenberg vehicle (BV) describes a vehicle which is capable of autonomous movement via two independent motors by considering primitive sensor inputs only.
 
+These sensors typically are proximity or light sensors, but may also include gas, acoustic, and similar sensors for specific applications. Movement is achieved by calculating the motor speed $v$ as a linear combinations of the sensor inputs $I$. Therefore, the values collected by the sensors are multiplied with weights $w$ and superimposed for each motor individually. Equation~(\ref{eq:motorequation}) show this principle, where the index $n\in\{\mathrm{L},\mathrm{R}\}$ describes the corresponding motor and $i=0,\ldots,N-1$ denotes the individual sensor. To ensure a net forward movement, an additional bias $w_{n,\text{bias}}$ is added.
 \begin{equation}
-	V_{Motor,n} = V_{Bias,n} + \sum\limits_{i=0}^{N-1}w_{n,i}\cdot V_{Sensor,i}
+	v_{n} = \sum\limits_{i=0}^{N-1} w_{n,i} I_{i} + w_{n,\text{bias}}
 	\label{eq:motorequation}
 \end{equation}
+The BV's behaviour can now be varied by adjusting the weights $w$. Considering a vehicle with $N$ sensors, this requires $2N+2$ weight values to be found, i.e. an optimisation problem in $\mathbb{R}^{2N+2}$.
 
-For this project the educational robot e-puck is used to serve as a Braitenberg Vehicle. It holds eight proximity sensors, which can be used for the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
+Assuming a symmetric BV, the problem size can be halved, as the weights of the left motor should be in reverse order to the right motor's weights, and the bias values should be the same:
+\begin{align}
+	w_{\mathrm{L}, i} = w_{\mathrm{R}, N-i} \nonumber \\
+	w_{\mathrm{L},\text{bias}} = w_{\mathrm{R},\text{bias}}.\label{eq:symmetry}
+\end{align}
+
+For this project the educational robot E-Puck serves as a Braitenberg vehicle. It sports $N=8$ infra red proximity sensors which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
 
 \begin{figure}[hbt]
 	\centering
 	\input{epucksketch}
-	\caption{Sketch of the e-puck robot, with motors, sensors and weights}
+	\caption{Sketch of the E-Puck robot, with motors, sensors and weights of the left side.}
 	\label{fig:epuck}
 \end{figure}
 
-The autonomous behaviour of the Braitenberg Vehicle can now be explained with a simple example. Imagine the robot is determined to avoid obstacles. If sensor one registers an approaching obstacle and therefore generates a value, motor one will begin to reduce it's speed, while motor two will begin to speed up, which results in turning the whole robot to the left.
+In this scenario, the E-Puck shall provide an obstacle avoidance behaviour. Consider the following example as an explanation for the desired functionality: if sensor $I_1$ registers an approaching obstacle (from about 1 o'clock) and therefore generates a value, motor $M_\mathrm{L}$ should reduce it's speed, while $M_\mathrm{R}$ should speed up, which results in a left turn, away from the obstacle.
+
+\section{Evolutionary Approach}
+
+To find (near) optimal values for the weights $w$ with respect to a certain desired behaviour, evolutionary algorithms (EA) can be utilized.
+
+The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the offspring is formed by copying or \emph{recombining} the parent individuals. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation is selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
+
+In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights. The fitness function $f$ has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+\begin{equation}
+	f = \sum\limits_T \tilde{f}.
+\end{equation}
+While in theory an integration, the total fitness is computed by a sum of multiple fitness contributions over a finite number of time steps. 
+
+The fitness value $\tilde{f}$ of each individual time step should reward directed forward movement, and penalise both close distance to walls and irregular movement: Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated with the $\sqrt{\cdot}$ function. The maximum value of the proximity sensor readouts is utilized as an additional penalty. The three aforementioned components are combined via multiplication, which simplifies merging of the different influences\footnote{they have different physical dimensions}. This leads to the following fitness contribution of one time step:
+\begin{equation}
+	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \left( 1 - k_{\Delta v}\sqrt{|v_\mathrm{L}-v_\mathrm{R}|} \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
+	\label{eq:fitness_timestep} 
+\end{equation}
+The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values for the factors of~(\ref{eq:fitness_timestep}). They also allow for a fine adjustment by weighting the different influences against each other.
+
+In practise, to get an (mostly) unbiased fitness evaluation for each individual, the E-Puck should be placed at the same starting position in the maze manually. The fitness is then evaluated by driving around for a reasonably long time $T$. 
+
+Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behaviour was reached after forty to fifty generations.
+
+
+\section{Adaptive Learning of Individuals}
+
+Due to the random mutation, the EA is a undirected, and therefore relatively slow strategy with respect to BV optimisation. 
 
 \end{document}
 	
