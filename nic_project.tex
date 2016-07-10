@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[a4paper]{jacow}
 
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}			 
@@ -46,7 +46,9 @@ Assuming a symmetric BV, the problem size can be halved, as the weights of the l
 	w_{\mathrm{L},\text{bias}} = w_{\mathrm{R},\text{bias}}.\label{eq:symmetry}
 \end{align}
 
-For this project the educational robot E-Puck serves as a Braitenberg vehicle. It sports $N=8$ infra red proximity sensors which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
+\section{E-Puck as Braitenberg Vehicle}
+
+For this project, the educational robot E-Puck serves as a Braitenberg vehicle. It sports $N=8$ infra red proximity sensors which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
 
 \begin{figure}[hbt]
 	\centering
@@ -54,6 +56,8 @@ For this project the educational robot E-Puck serves as a Braitenberg vehicle. I
 	\caption{Sketch of the E-Puck robot, with motors, sensors and weights of the left side.}
 	\label{fig:epuck}
 \end{figure}
+
+In the following considerations, the sensor values are normalised to the range of $[0,1]\ni I$, a value of one meaning that an obstacle is at point blank range to the sensor, and zero that no backscattered signal is received at all. The motors' control signals are in the range of $[-1000,1000]\ni v$, with the extreme values meaning full speed forwards and backwards, respectively. Referring to eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly.
 
 In this scenario, the E-Puck shall provide an obstacle avoidance behaviour. Consider the following example as an explanation for the desired functionality: if sensor $I_1$ registers an approaching obstacle (from about 1 o'clock) and therefore generates a value, motor $M_\mathrm{L}$ should reduce it's speed, while $M_\mathrm{R}$ should speed up, which results in a left turn, away from the obstacle.
 
@@ -63,7 +67,7 @@ To find (near) optimal values for the weights $w$ with respect to a certain desi
 
 The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the offspring is formed by copying or \emph{recombining} the parent individuals. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation is selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
 
-In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights. The fitness function $f$ has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function $f:[-1000,1000]^9\to \mathbb{R}$ has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
 \begin{equation}
 	f = \sum\limits_T \tilde{f}.
 \end{equation}
@@ -74,16 +78,22 @@ The fitness value $\tilde{f}$ of each individual time step should reward directe
 	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \left( 1 - k_{\Delta v}\sqrt{|v_\mathrm{L}-v_\mathrm{R}|} \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
 	\label{eq:fitness_timestep} 
 \end{equation}
-The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values for the factors of~(\ref{eq:fitness_timestep}). They also allow for a fine adjustment by weighting the different influences against each other.
+The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values for the penalty factors of~(\ref{eq:fitness_timestep}). They also allow for a fine adjustment by weighting the different influences against each other.
 
 In practise, to get an (mostly) unbiased fitness evaluation for each individual, the E-Puck should be placed at the same starting position in the maze manually. The fitness is then evaluated by driving around for a reasonably long time $T$. 
 
-Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behaviour was reached after forty to fifty generations.
+Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behaviour was reached after roughly fifty generations.
 
 
 \section{Adaptive Learning of Individuals}
 
-Due to the random mutation, the EA is a undirected, and therefore relatively slow strategy with respect to BV optimisation. 
+Due to the random mutation, the EA is a undirected, and therefore relatively slow strategy with to optimise an E-Puck Braitenberg vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function.
+
+To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented. The controller provides the basic behaviour by activating the motors according to eq.~(\ref{eq:motorequation}) and the current weights.
+
+The value system's task is to simulate reward and punishment for a certain behaviour by adjusting the weights, as well as the individual's reflexes.
+
+In this specific example, the value systems reacts on a collision with an obstacle.
 
 \end{document}
 	
