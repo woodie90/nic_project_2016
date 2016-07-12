@@ -10,6 +10,7 @@
 \usepackage{tikz}
 \usepackage{xcolor}
 \usepackage{siunitx}
+%\usepackage{parskip}
 
 
 \input{commands}
@@ -24,20 +25,20 @@
 	
 \maketitle
 
-
-\begin{abstract}
-   Insert shiny abstract!
-\end{abstract}
+%\begin{abstract}
+%   Insert shiny abstract!
+%\end{abstract}
 
 \section{The Braitenberg Vehicle}
 
 The term Braitenberg vehicle (BV) describes a vehicle which is capable of autonomous movement via two independent motors by considering primitive sensor inputs only.
 
-These sensors typically are proximity or light sensors, but may also include gas, acoustic, and similar sensors for specific applications. Movement is achieved by calculating the motor speed $v$ as a linear combinations of the sensor inputs $I$. Therefore, the values collected by the sensors are multiplied with weights $w$ and superimposed for each motor individually. Equation~(\ref{eq:motorequation}) show this principle, where the index $n\in\{\mathrm{L},\mathrm{R}\}$ describes the corresponding motor and $i=0,\ldots,N-1$ denotes the individual sensor. To ensure a net forward movement, an additional bias $w_{n,\text{bias}}$ is added.
+These sensors typically are proximity or light sensors, but may also include gas, acoustic, and similar sensors for specific applications. Movement is achieved by calculating the motor speed $v$ as a linear combinations of the sensor inputs $I$. Therefore, the values collected by the sensors are multiplied with weights $w$ and superimposed for each motor individually. Equation~(\ref{eq:motorequation}) shows this principle, where the index $n\in\{\mathrm{L},\mathrm{R}\}$ describes the corresponding motor and $i=0,\ldots,N-1$ denotes the individual sensor. To ensure a net forward movement, an additional bias $w_{n,\text{bias}}$ is added.
 \begin{equation}
 	v_{n} = \sum\limits_{i=0}^{N-1} w_{n,i} I_{i} + w_{n,\text{bias}}
 	\label{eq:motorequation}
 \end{equation}
+
 The BV's behaviour can now be varied by adjusting the weights $w$. Considering a vehicle with $N$ sensors, this requires $2N+2$ weight values to be found, i.e. an optimisation problem in $\mathbb{R}^{2N+2}$.
 
 Assuming a symmetric BV, the problem size can be halved, as the weights of the left motor should be in reverse order to the right motor's weights, and the bias values should be the same:
@@ -67,15 +68,15 @@ To find (near) optimal values for the weights $w$ with respect to a certain desi
 
 The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the offspring is formed by copying or \emph{recombining} the parent individuals. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation is selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
 
-In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function $f:[-1000,1000]^9\to \mathbb{R}$ has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
 \begin{equation}
 	f = \sum\limits_T \tilde{f}.
 \end{equation}
 While in theory an integration, the total fitness is computed by a sum of multiple fitness contributions over a finite number of time steps. 
 
-The fitness value $\tilde{f}$ of each individual time step should reward directed forward movement, and penalise both close distance to walls and irregular movement: Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated with the $\sqrt{\cdot}$ function. The maximum value of the proximity sensor readouts is utilized as an additional penalty. The three aforementioned components are combined via multiplication, which simplifies merging of the different influences\footnote{they have different physical dimensions}. This leads to the following fitness contribution of one time step:
+The fitness value $\tilde{f}$ of each individual time step should reward directed forward movement, and penalise both close distance to walls and irregular movement: Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated with the $\exp(\cdot)$ function. The maximum value of the proximity sensor readouts is utilized as an additional penalty. The three aforementioned components are combined via multiplication, which simplifies merging of the different influences\footnote{they have different physical dimensions}. This leads to the following fitness contribution of one time step:
 \begin{equation}
-	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \left( 1 - k_{\Delta v}\sqrt{|v_\mathrm{L}-v_\mathrm{R}|} \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
+	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \exp\left( - k_{\Delta v}|v_\mathrm{L}-v_\mathrm{R}| \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
 	\label{eq:fitness_timestep} 
 \end{equation}
 The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values for the penalty factors of~(\ref{eq:fitness_timestep}). They also allow for a fine adjustment by weighting the different influences against each other.
@@ -87,13 +88,38 @@ Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was t
 
 \section{Adaptive Learning of Individuals}
 
-Due to the random mutation, the EA is a undirected, and therefore relatively slow strategy with to optimise an E-Puck Braitenberg vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function.
+Due to the random mutation, the EA is a undirected, and therefore relatively slow strategy with to optimise an E-Puck Braitenberg vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting on changing environments, e.g. placing the robot in a maze with wall of different reflectivity.
 
 To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented. The controller provides the basic behaviour by activating the motors according to eq.~(\ref{eq:motorequation}) and the current weights.
 
 The value system's task is to simulate reward and punishment for a certain behaviour by adjusting the weights, as well as the individual's reflexes.
 
-In this specific example, the value systems reacts on a collision with an obstacle.
+In this specific example, the value systems reacts on a collision with an obstacle. A collision $C$ can be detected in two ways: first, if any of the sensor values is above a certain threshold $\Theta_I$:
+\begin{equation}
+	C = \bigvee\limits_{i=0}^{N-1} \left( I_i > \Theta_I \right). 
+\end{equation}
+The other variant handles the rare example, that the E-Puck is stuck at a convex corner in a way, that both sensors nearest to said corner don't reach $\Theta$. A collision is then assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the sensor readout differences don't change over a defined time, i.e. their norm is below a threshold $\Theta_B$:
+\begin{equation}
+	C = \sum\limits_{i=0}^{N-1} I_i^2 > \Theta_A \;\wedge\; \sum\limits_{i=0}^{N-1} (\Delta I_i)^2 < \Theta_B.
+\end{equation}
+Both collision types are countered with a back-off reflex, i.e. the robot moves away from the obstacle for a short time.
+
+For the first collision type, the weight of the sensor $I_m$ with the highest value is increased or decreased by a certain value $\Delta w$, depending on which side of the E-Puck the sensor is on, as the right motor's weights are the left motor's weights in reverse order:
+\begin{align}
+	w_m &\leftarrow w_m \pm \Delta w\label{eq:weightcorrection}
+\end{align}
+
+To prevent the weights from reaching too high magnitudes, they are normalized after the correction~(\ref{eq:weightcorrection}) if necessary. If the squared norm of the sensor weights is larger than a value $\Theta_W$, i.e.
+\begin{equation}
+	\sum\limits_{i=0}^{N-1} w_i^2 > \Theta_W,
+\end{equation}
+the weights are normalized accordingly:
+\begin{equation}
+	w_i \leftarrow w_i \cdot \frac{\Theta_W}{\sum\limits_{i=0}^{N-1} w_i^2}.
+\end{equation}
+Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable for the correction value. The bias was kept constant at $w_\text{bias} = 150$.
+
+The frequency of the value system's interventions decreases over time, as the controller is adapted better and better. In this scenario, a reasonable controller adaptation was reached after roughly thirty interventions or four minutes. After that, the value system only activates sporadically, to free the E-Puck BV from delicate situations. The adaptive learning therefore is by orders of magnitude faster than the evolutionary approach.
 
 \end{document}
 	
