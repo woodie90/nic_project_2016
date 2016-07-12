@@ -19,9 +19,9 @@
 
 \title{Investigation of Nature Inspired Algorithms in a practical context by exploiting the characteristics of Braitenberg Vehicle Concepts}
 
-\author{A. Dorn\thanks{andrea.dorn@uni-rostock.de}, University of Rostock, Rostock, Germany \\
-		H. Pommerenke\thanks{hermann.pommerenke@uni-rostock.de}, University of Rostock, Rostock, Germany \\
-		T. Steinmetz\thanks{tino.steinmetz@uni-rostock.de}, University of Rostock, Rostock, Germany}
+\author{A. Dorn\thanks{andrea.dorn@uni-rostock.de}, University of Rostock, Germany \\
+		H. Pommerenke\thanks{hermann.pommerenke@uni-rostock.de}, University of Rostock, Germany \\
+		T. Steinmetz\thanks{tino.steinmetz@uni-rostock.de}, University of Rostock, Germany}
 	
 \maketitle
 
@@ -50,6 +50,8 @@ Assuming a symmetric BV, the problem size can be halved, as the weights of the l
 \section{E-Puck as Braitenberg Vehicle}
 
 For this project, the educational robot E-Puck serves as a Braitenberg vehicle. It sports $N=8$ infra red proximity sensors which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
+
+To enable performing complex calculations and reduce the load on the E-Puck's micro controller, it is connected to a host PC via Bluetooth. As all computations are performed on the PC, the micro controller's tasks are limited to transmitting and receiving sensor and motor signals. A disadvantage of this method is the noticeable latency caused by the Bluetooth connection.
 
 \begin{figure}[hbt]
 	\centering
@@ -96,7 +98,7 @@ The value system's task is to simulate reward and punishment for a certain behav
 
 In this specific example, the value systems reacts on a collision with an obstacle. A collision $C$ can be detected in two ways: first, if any of the sensor values is above a certain threshold $\Theta_I$:
 \begin{equation}
-	C = \bigvee\limits_{i=0}^{N-1} \left( I_i > \Theta_I \right). 
+	C = \bigvee\limits_{i=0}^{N-1} I_i > \Theta_I. 
 \end{equation}
 The other variant handles the rare example, that the E-Puck is stuck at a convex corner in a way, that both sensors nearest to said corner don't reach $\Theta$. A collision is then assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the sensor readout differences don't change over a defined time, i.e. their norm is below a threshold $\Theta_B$:
 \begin{equation}
@@ -111,11 +113,11 @@ For the first collision type, the weight of the sensor $I_m$ with the highest va
 
 To prevent the weights from reaching too high magnitudes, they are normalized after the correction~(\ref{eq:weightcorrection}) if necessary. If the squared norm of the sensor weights is larger than a value $\Theta_W$, i.e.
 \begin{equation}
-	\sum\limits_{i=0}^{N-1} w_i^2 > \Theta_W,
+	W = \sum\limits_{i=0}^{N-1} w_i^2 > \Theta_W,
 \end{equation}
 the weights are normalized accordingly:
 \begin{equation}
-	w_i \leftarrow w_i \cdot \frac{\Theta_W}{\sum\limits_{i=0}^{N-1} w_i^2}.
+	w_i \leftarrow w_i \cdot \frac{\Theta_W}{W}.
 \end{equation}
 Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable for the correction value. The bias was kept constant at $w_\text{bias} = 150$.
 
