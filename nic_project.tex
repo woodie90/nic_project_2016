@@ -31,17 +31,17 @@
 
 \section{The Braitenberg Vehicle}
 
-The term Braitenberg vehicle (BV) describes a vehicle which is capable of autonomous movement via two independent motors by considering primitive sensor inputs only.
+The term Braitenberg Vehicle (BV) describes a vehicle which is capable of autonomous movement via two independent motors by considering primitive sensor inputs only.
 
-These sensors typically are proximity or light sensors, but may also include gas, acoustic, and similar sensors for specific applications. Movement is achieved by calculating the motor speed $v$ as a linear combinations of the sensor inputs $I$. Therefore, the values collected by the sensors are multiplied with weights $w$ and superimposed for each motor individually. Equation~(\ref{eq:motorequation}) shows this principle, where the index $n\in\{\mathrm{L},\mathrm{R}\}$ describes the corresponding motor and $i=0,\ldots,N-1$ denotes the individual sensor. To ensure a net forward movement, an additional bias $w_{n,\text{bias}}$ is added.
+These sensors typically are proximity or light sensors, but may also include gas, acoustic, and similar sensors for specific applications. Movement is achieved by calculating the motor speed $v$ as a linear combination of the sensor inputs $I$. Therefore, the values collected by the sensors are multiplied with weights $w$ and superimposed for each motor individually. Equation~(\ref{eq:motorequation}) shows this principle, where the index $n\in\{\mathrm{L},\mathrm{R}\}$ describes the corresponding motor and $i=0,\ldots,N-1$ denotes the individual sensor. To ensure a net forward movement, an additional bias $w_{n,\text{bias}}$ is added.
 \begin{equation}
-	v_{n} = \sum\limits_{i=0}^{N-1} w_{n,i} I_{i} + w_{n,\text{bias}}
+	v_{n} = \sum\limits_{i=0}^{N-1} w_{n,i}\cdot I_{i} + w_{n,\text{bias}}
 	\label{eq:motorequation}
 \end{equation}
 
 The BV's behaviour can now be varied by adjusting the weights $w$. Considering a vehicle with $N$ sensors, this requires $2N+2$ weight values to be found, i.e. an optimisation problem in $\mathbb{R}^{2N+2}$.
 
-Assuming a symmetric BV, the problem size can be halved, as the weights of the left motor should be in reverse order to the right motor's weights, and the bias values should be the same:
+Assuming a symmetric BV, the problem size can be halved, as the weights of the left motor should be in reverse order to the right motor's weights, and the bias values should be identical:
 \begin{align}
 	w_{\mathrm{L}, i} = w_{\mathrm{R}, N-i} \nonumber \\
 	w_{\mathrm{L},\text{bias}} = w_{\mathrm{R},\text{bias}}.\label{eq:symmetry}
@@ -49,9 +49,18 @@ Assuming a symmetric BV, the problem size can be halved, as the weights of the l
 
 \section{E-Puck as Braitenberg Vehicle}
 
-For this project, the educational robot E-Puck serves as a Braitenberg vehicle. It sports $N=8$ infra red proximity sensors which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
+For this project, the educational robot E-Puck (Fig.~\ref{fig:epuck_photo}) serves as a Braitenberg Vehicle. It provides $N=8$ infra red proximity sensors, which are used as the above mentioned sensor inputs. Figure~\ref{fig:epuck} shows the symmetric distribution of the sensors and the basic principle of the motor control.
 
 To enable performing complex calculations and reduce the load on the E-Puck's micro controller, it is connected to a host PC via Bluetooth. As all computations are performed on the PC, the micro controller's tasks are limited to transmitting and receiving sensor and motor signals. A disadvantage of this method is the noticeable latency caused by the Bluetooth connection.
+
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=\linewidth]{epuck.jpg}
+	\caption{Photo of E-Puck robot (front left view).}
+	\label{fig:epuck_photo}
+\end{figure}
+
+In the following considerations, the sensor values are normalized to the range of $[0,1]\ni I$, a value of $1$ meaning that an obstacle is in close vicinity to the sensor, and $0$ that no backscattered IR signal is received at all. The motors' control signals are in the range of $[-1000,1000]\ni v$, with the extreme values meaning full speed backward and forward, respectively.
 
 \begin{figure}[hbt]
 	\centering
@@ -60,23 +69,21 @@ To enable performing complex calculations and reduce the load on the E-Puck's mi
 	\label{fig:epuck}
 \end{figure}
 
-In the following considerations, the sensor values are normalised to the range of $[0,1]\ni I$, a value of one meaning that an obstacle is at point blank range to the sensor, and zero that no backscattered signal is received at all. The motors' control signals are in the range of $[-1000,1000]\ni v$, with the extreme values meaning full speed forwards and backwards, respectively. Referring to eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly.
-
-In this scenario, the E-Puck shall provide an obstacle avoidance behaviour. Consider the following example as an explanation for the desired functionality: if sensor $I_1$ registers an approaching obstacle (from about 1 o'clock) and therefore generates a value, motor $M_\mathrm{L}$ should reduce it's speed, while $M_\mathrm{R}$ should speed up, which results in a left turn, away from the obstacle.
+In this scenario, the E-Puck shall provide an obstacle avoidance behaviour. Consider the following example as an explanation for the desired functionality: if one of the front right sensors register an approaching obstacle and therefore generate a value, motor $M_\mathrm{R}$ should speed up, while $M_\mathrm{L}$ should reduce its speed, which results in a left turn, away from the obstacle.
 
 \section{Evolutionary Approach}
 
 To find (near) optimal values for the weights $w$ with respect to a certain desired behaviour, evolutionary algorithms (EA) can be utilized.
 
-The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the offspring is formed by copying or \emph{recombining} the parent individuals. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation is selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
+The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the parent individuals are copied or \emph{recombined}. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation are selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
 
-In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} has to indicate, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. Referring to Eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} indicates, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
 \begin{equation}
 	f = \sum\limits_T \tilde{f}.
 \end{equation}
 While in theory an integration, the total fitness is computed by a sum of multiple fitness contributions over a finite number of time steps. 
 
-The fitness value $\tilde{f}$ of each individual time step should reward directed forward movement, and penalise both close distance to walls and irregular movement: Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated with the $\exp(\cdot)$ function. The maximum value of the proximity sensor readouts is utilized as an additional penalty. The three aforementioned components are combined via multiplication, which simplifies merging of the different influences\footnote{they have different physical dimensions}. This leads to the following fitness contribution of one time step:
+The fitness value $\tilde{f}$ of each individual time step should reward straight forward movement, and penalize both close distance to walls and irregular movement. Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated by the $\exp()$ function. The maximum value of the proximity sensor readouts is utilized as an additional penalty. These three components are combined via multiplication, which simplifies merging of the different influences\footnote{they have different physical dimensions}. This leads to the following fitness contribution of one time step:
 \begin{equation}
 	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \exp\left( - k_{\Delta v}|v_\mathrm{L}-v_\mathrm{R}| \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
 	\label{eq:fitness_timestep} 
