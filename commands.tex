@@ -1,10 +1,23 @@
-\usetikzlibrary{
-  arrows,
-  shapes.misc,
-}
-
+% color definitions, mainly derived from the maincolor and black
 \definecolor{maincolor}{cmyk}{10,75,0.0,0.0}
 \colorlet{sensorcolor}{maincolor}
 \colorlet{weightcolor}{maincolor!50}
+\colorlet{outerblockcolor}{maincolor!30}
 
 \colorlet{irrelevantcolor}{black!10}
+\colorlet{midblockfillcolor}{black!10}
+\colorlet{midblockdashedbordercolor}{black!50}
+
+% used tikz librarys
+\usetikzlibrary{
+  arrows,
+  shapes.misc,
+  shapes,
+}
+
+% style definitions for the block diagram
+\tikzstyle{basicblock}=[thick, draw, minimum height=2em]
+\tikzstyle{vsinnerblock}=[basicblock, rectangle]
+\tikzstyle{cinnerblock}=[basicblock, rounded rectangle]
+\tikzstyle{outerblock}=[basicblock, fill=outerblockcolor, text width=5em,text centered, minimum height=20em, rounded corners]
+\tikzstyle{midblocks}=[outerblock, draw=midblockdashedbordercolor, fill=midblockfillcolor, minimum height=8em, minimum width=20em, text width=10em]

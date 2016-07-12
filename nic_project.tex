@@ -101,6 +101,13 @@ Due to the random mutation, the EA is a undirected, and therefore relatively slo
 
 To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented. The controller provides the basic behaviour by activating the motors according to eq.~(\ref{eq:motorequation}) and the current weights.
 
+\begin{figure*}[tbp]
+	\centering
+	\input{adaptivelearningsketch}
+	\caption{Block diagram of the implemented adaptive learning concept.}
+	\label{fig:adaptivelearningsketch}
+\end{figure*}
+
 The value system's task is to simulate reward and punishment for a certain behaviour by adjusting the weights, as well as the individual's reflexes.
 
 In this specific example, the value systems reacts on a collision with an obstacle. A collision $C$ can be detected in two ways: first, if any of the sensor values is above a certain threshold $\Theta_I$:
@@ -129,6 +136,8 @@ the weights are normalized accordingly:
 Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable for the correction value. The bias was kept constant at $w_\text{bias} = 150$.
 
 The frequency of the value system's interventions decreases over time, as the controller is adapted better and better. In this scenario, a reasonable controller adaptation was reached after roughly thirty interventions or four minutes. After that, the value system only activates sporadically, to free the E-Puck BV from delicate situations. The adaptive learning therefore is by orders of magnitude faster than the evolutionary approach.
+
+
 
 \end{document}
 	

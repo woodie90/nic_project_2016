@@ -1,0 +1,19 @@
+\begin{tikzpicture}
+	\node (sensorblock) [outerblock] {Sensors};
+	\path (sensorblock) + (18em,6em) node (controller) [midblocks] {};
+	\path (controller) + (-10em,4em) node [below right] {Controller};
+	\path (sensorblock) + (18em,-6em) node (valuesystem) [midblocks, dashed] {};
+	\path (valuesystem) + (-10em,4em) node [below right] {Value System};
+	\path (sensorblock) + (36em,0) node (Actors) [outerblock] {Actors};
+	\path (valuesystem) + (0,-1.5em) node (Reflexes) [vsinnerblock] {Reflexes};
+	\path (valuesystem) + (0,1.5em) node (Adjustment) [vsinnerblock] {Weight Adjustment};
+	\path (controller) + (0,-1.5em) node (Weights) [cinnerblock] {Weights};
+	\path (controller) + (0,1.5em) node (multiply) [cinnerblock] {\large $\times$};
+	\draw [->,thick] (Reflexes) to (Adjustment);
+	\draw [->,thick] (Adjustment) to (Weights);
+	\draw [->,thick] (sensorblock.east |- multiply) -- (multiply);
+	\draw [->, thick] (sensorblock.east |- Reflexes) -- (Reflexes);
+	\draw [->, thick] (Reflexes) -- (Actors.west |- Reflexes);
+	\draw [->, thick] (multiply) -- (Actors.west |- multiply);
+	\draw [->, thick] (Weights) -- (multiply);
+\end{tikzpicture}
