@@ -83,7 +83,7 @@ In this scenario, a symmetric BV shall show a collision avoidance behaviour whil
 \end{equation}
 While in theory an integration, the total fitness is computed by a sum of multiple fitness contributions over a finite number of time steps. 
 
-The fitness value $\tilde{f}$ of each individual time step should reward straight forward movement, and penalize both close distance to walls and irregular movement. Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} points to irregular movement and many turns. As turning is required to avoid obstacles, this penalty is attenuated by the $\exp()$ function. The \emph{maximum} value of the proximity sensor readouts is utilized as an additional penalty. These components are connected via multiplication, so that the different physical units and orders of magnitude of the three terms can be omitted. This leads to the following fitness contribution of one time step:
+The fitness value $\tilde{f}$ of each individual time step should reward straight forward movement, and penalize both close distance to walls and irregular movement. Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} indicates irregular movement and frequent turning. Nevertheless, turning is essential for avoiding obstacles, therefore this penalty is attenuated by the $\exp()$ function. The \emph{maximum} value of the proximity sensor readouts is utilized as an additional penalty. These components are connected via multiplication, so that the different physical units and orders of magnitude of the three terms can be omitted. This leads to the following fitness contribution of one time step:
 \begin{equation}
 	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \exp\left( - k_{\Delta v}|v_\mathrm{L}-v_\mathrm{R}| \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
 	\label{eq:fitness_timestep} 
@@ -95,7 +95,7 @@ In practice, to get an (mostly) unbiased fitness evaluation for each individual,
 Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behaviour was reached after roughly fifty generations.
 
 
-\section{Adaptive Learning of Individuals}
+\section{Adaptive Learning}
 
 Due to the random mutation, the EA is a undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting on changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
 
@@ -119,7 +119,7 @@ During the testing of the adaptive algorithm, the E-Puck eventually got stuck at
 \begin{equation}
 	C = \sum\limits_{i=0}^{N-1} I_i^2 > \Theta_A \;\wedge\; \sum\limits_{i=0}^{N-1} (\Delta I_i)^2 < \Theta_B.
 \end{equation}
-However, this situation occures very rarely. 
+However, this situation occurs very rarely. 
 Both collision types are countered with a back-off reflex, meaning the robot moves away from the obstacle for a short time period.
 
 For the first collision type, the weight of the sensor $I_m$ with the highest value is increased or decreased by a certain value $\Delta w$, depending on which side of the E-Puck the sensor is on, as the right motor's weights are the left motor's weights in reverse order:
