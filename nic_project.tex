@@ -75,29 +75,27 @@ In this scenario, the E-Puck shall provide an obstacle avoidance behavior. Consi
 
 To find (near) optimal values for the weights $w$ with respect to a certain desired behavior, evolutionary algorithms (EA) can be utilized.
 
-The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the parent individuals are copied or \emph{recombined}. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation are selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
+The EA finds an optimum value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the parental genomes are copied or \emph{recombined}. The offspring then results from random\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutation} of said genomes. The parents for the next generation are selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
 
-In this scenario, a symmetric BV shall show a collision avoidance behavior while driving around a maze. Referring to Eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} indicates, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+In this scenario, a symmetric BV shall show a collision avoidance behavior while driving around in a maze. Referring to Eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} indicates, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
 \begin{equation}
 	f = \sum\limits_T \tilde{f}.
 \end{equation}
 While in theory an integration, the total fitness is computed by a sum of multiple fitness contributions over a finite number of time steps. 
 
-The fitness value $\tilde{f}$ of each individual time step should reward straight forward movement, and penalize both close distance to walls and irregular movement. Forward movement corresponds to a high \emph{average} speed between the two motors. In contrast, a high speed \emph{difference} indicates irregular movement and frequent turning. Nevertheless, turning is essential for avoiding obstacles, therefore this penalty is attenuated by the $\exp()$ function. The \emph{maximum} value of the proximity sensor readouts is utilized as an additional penalty. These components are connected via multiplication, so that the different physical units and orders of magnitude of the three terms can be omitted. This leads to the following fitness contribution of one time step:
+The fitness value $\tilde{f}$ of each individual time step should reward straight forward movement, and penalize both close distance to walls and irregular movement. Forward movement corresponds to a high \emph{average} speed of the two motors. In contrast, a high speed \emph{difference} indicates irregular movement and frequent turning. Nevertheless, turning is essential for avoiding obstacles, therefore this penalty is attenuated by the $\exp()$ function. The \emph{maximum} value of the proximity sensor readouts is utilized as an additional penalty. These components are connected via multiplication, so that the different physical units and orders of magnitude of the three terms can be omitted. This leads to the following fitness contribution of one time step:
 \begin{equation}
 	\tilde{f} = \left( v_\mathrm{L} + v_\mathrm{R} \right) \cdot \exp\left( - k_{\Delta v}|v_\mathrm{L}-v_\mathrm{R}| \right) \cdot \left(1- k_{I} \max\limits_i I_i\right)
 	\label{eq:fitness_timestep} 
 \end{equation}
 The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values for the penalty factors of~(\ref{eq:fitness_timestep}). They also allow for a fine adjustment by weighting the different influences against each other.
 
-In practice, to get an (mostly) unbiased fitness evaluation for each individual, for each time step the E-Puck should be placed at the same starting position in the maze manually. The fitness is then evaluated by driving around for a reasonably long time $T$. 
-
-Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behavior was reached after roughly fifty generations.
+In practice, to get a (mostly) unbiased fitness evaluation, the E-Puck should be placed manually at the same starting position in the maze for each time step. The fitness is then evaluated by driving around for a reasonably long time $T$. Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behavior was reached after roughly 50 generations.
 
 
 \section{Adaptive Learning}
 
-Due to the random mutation, the EA is a undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting on changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
+Due to the random mutation, the EA is a undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the evolutionary process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting to changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
 
 
 To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented, as shown in Fig.~(\ref{fig:adaptivelearningsketch}). The controller provides the basic driving behavior by activating the motors with the current weights according to Eq.~(\ref{eq:motorequation}).
@@ -126,7 +124,7 @@ For the first collision type, the weight of the sensor $I_m$ with the highest va
 	w_m &\leftarrow w_m \pm \Delta w\label{eq:weightcorrection}
 \end{align}
 
-To prevent the weights from reaching too high magnitudes, they are normalized after the correction~(\ref{eq:weightcorrection}), if necessary. If the squared norm of the sensor weights is larger than a value $\Theta_W$, i.e.
+To prevent the weights from reaching too high magnitudes, they are normalized after the correction by $\Delta w$, if necessary. If the squared norm of the sensor weights is larger than a value $\Theta_W$, i.e.
 \begin{equation}
 	W = \sum\limits_{i=0}^{N-1} w_i^2 > \Theta_W,
 \end{equation}
@@ -134,7 +132,7 @@ the weights are normalized accordingly:
 \begin{equation}
 	w_i \leftarrow w_i \cdot \frac{\Theta_W}{W}.
 \end{equation}
-Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable for the correction value. The bias is kept constant at $w_\text{bias} = 150$.
+Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable. The bias is kept constant at $w_{n,\text{bias}} = 150$.
 
 The frequency of the value system's interventions decreases over time, as the controller adapts better and better. In this scenario, a reasonable controller adaptation was reached after roughly thirty interventions or four minutes. After that, the value system only activates sporadically, to free the E-Puck BV from delicate situations. The adaptive learning therefore is by orders faster than the evolutionary approach.
 
