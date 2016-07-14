@@ -39,7 +39,7 @@ These sensors typically are proximity or light sensors, but may also include gas
 	\label{eq:motorequation}
 \end{equation}
 
-The BV's behaviour can now be varied by adjusting the weights $w$. Considering a vehicle with $N$ sensors, this requires $2N+2$ weight values to be found, i.e. an optimisation problem in $\mathbb{R}^{2N+2}$.
+The BV's behavior can now be varied by adjusting the weights $w$. Considering a vehicle with $N$ sensors, this requires $2N+2$ weight values to be found, i.e. an optimization problem in $\mathbb{R}^{2N+2}$.
 
 Assuming a symmetric BV, the problem size can be halved, as the weights of the left motor should be in reverse order to the right motor's weights, and the bias values should be identical:
 \begin{align}
@@ -69,15 +69,15 @@ In the following considerations, the sensor values are normalized to the range o
 	\label{fig:epuck}
 \end{figure}
 
-In this scenario, the E-Puck shall provide an obstacle avoidance behaviour. Consider the following example as an explanation for the desired functionality: if one of the front right sensors register an approaching obstacle and therefore generate a value, motor $M_\mathrm{R}$ should speed up, while $M_\mathrm{L}$ should reduce its speed, which results in a left turn, away from the obstacle.
+In this scenario, the E-Puck shall provide an obstacle avoidance behavior. Consider the following example as an explanation for the desired functionality: if one of the front right sensors register an approaching obstacle and therefore generate a value, motor $M_\mathrm{R}$ should speed up, while $M_\mathrm{L}$ should reduce its speed, which results in a left turn, away from the obstacle.
 
 \section{Evolutionary Approach}
 
-To find (near) optimal values for the weights $w$ with respect to a certain desired behaviour, evolutionary algorithms (EA) can be utilized.
+To find (near) optimal values for the weights $w$ with respect to a certain desired behavior, evolutionary algorithms (EA) can be utilized.
 
 The EA finds an extremal value of a fitness function $f$ over the search space by creating a population of individuals, containing parents and offspring. Each individual holds a genome equal to its position in the search space. In each evolution step, the parent individuals are copied or \emph{recombined}. The offspring is then randomly\footnote{by a Gaussian $\mathcal{N}(0,\sigma)$ distributed number} \emph{mutated}. The parents for the next generation are selected from the population according to the aforementioned fitness function. The EA strategy can be modified by changing the population size, selection method, mutation and recombination parameters.
 
-In this scenario, a symmetric BV shall show a collision avoidance behaviour while driving around a maze. Referring to Eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} indicates, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
+In this scenario, a symmetric BV shall show a collision avoidance behavior while driving around a maze. Referring to Eq.~(\ref{eq:motorequation}), the weights are chosen from the interval $[-1000,1000]\ni w$ accordingly. The search space is formed by the nine weights, thus limited to $[-1000,1000]^9$. The fitness function \mbox{$f:[-1000,1000]^9\to \mathbb{R}$} indicates, how well the BV moves around its environment. Thus, $f$ has to be evaluated over a certain time $T$:
 \begin{equation}
 	f = \sum\limits_T \tilde{f}.
 \end{equation}
@@ -92,7 +92,7 @@ The constants $k_{\Delta v}$, $k_I$ prevent the occurrence of negative values fo
 
 In practice, to get an (mostly) unbiased fitness evaluation for each individual, for each time step the E-Puck should be placed at the same starting position in the maze manually. The fitness is then evaluated by driving around for a reasonably long time $T$. 
 
-Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behaviour was reached after roughly fifty generations.
+Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was tested. A reasonable behavior was reached after roughly fifty generations.
 
 
 \section{Adaptive Learning}
@@ -100,7 +100,8 @@ Here, $T\approx\SI{30}{\sec}$ was chosen. For the EA, the $(1+1)$ strategy was t
 Due to the random mutation, the EA is a undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the learning process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting on changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
 
 
-To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented, as shown in Fig.~(\ref{fig:adaptivelearningsketch}). The controller provides the basic behaviour by activating the motors according to Eq.~(\ref{eq:motorequation}) and the current weights.
+To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented, as shown in Fig.~(\ref{fig:adaptivelearningsketch}). The controller provides the basic driving behavior by activating the motors with the current weights according to Eq.~(\ref{eq:motorequation}).
+The value system's task is to simulate reward and punishment for a certain behavior by adjusting the weights, as well as to provide reflexes for specific situations.
 
 \begin{figure*}[tbp]
 	\centering
@@ -109,13 +110,11 @@ To achieve a both adaptive and individual learning process, a combination of con
 	\label{fig:adaptivelearningsketch}
 \end{figure*}
 
-The value system's task is to simulate reward and punishment for a certain behaviour by adjusting the weights, as well as to provide reflexes for specific situations.
-
-In this example, the value systems reacts to a collision with an obstacle. Usually, a collision $C$ is detected when any of the sensor values exceeds a certain threshold $\Theta_I$:
+In this application, the value system reacts to a collision with an obstacle. Usually, a collision $C$ is detected when any of the sensor values exceeds a certain threshold $\Theta_I$:
 \begin{equation}
 	C = \bigvee\limits_{i=0}^{N-1} I_i > \Theta_I. 
 \end{equation}
-During the testing of the adaptive algorithm, the E-Puck eventually got stuck at a convex corner in a way, that both sensors nearest to said corner did not reach $\Theta$. Therefore, a collision is also assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the readouts of each individual sensor do not have a change bigger than a certain value $\Theta_B$ over a defined time.
+During the testing of the adaptive algorithm, the E-Puck eventually got stuck at a convex corner in a way, that both sensor values nearest to said corner did not reach $\Theta$. Therefore, a collision is also assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the readouts of each individual sensor do not show a change bigger than a certain value $\Theta_B$ over a defined time.
 \begin{equation}
 	C = \sum\limits_{i=0}^{N-1} I_i^2 > \Theta_A \;\wedge\; \sum\limits_{i=0}^{N-1} (\Delta I_i)^2 < \Theta_B.
 \end{equation}
