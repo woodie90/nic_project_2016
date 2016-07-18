@@ -17,7 +17,9 @@
 
 \begin{document}
 
-\title{Investigation of Nature Inspired Algorithms in a practical context by exploiting the characteristics of Braitenberg Vehicle Concepts}
+%\title{Investigation of Nature Inspired Algorithms in a practical context by exploiting the characteristics of Braitenberg Vehicle Concepts}
+
+\title{Nature Inspired Algorithms in the practical context of Braitenberg Vehicles}
 
 \author{A. Dorn\thanks{andrea.dorn@uni-rostock.de}, University of Rostock, Germany \\
 		H. Pommerenke\thanks{hermann.pommerenke@uni-rostock.de}, University of Rostock, Germany \\
@@ -69,7 +71,7 @@ In the following considerations, the sensor values are normalized to the range o
 	\label{fig:epuck}
 \end{figure}
 
-In this scenario, the E-Puck shall provide an obstacle avoidance behavior. Consider the following example as an explanation for the desired functionality: if one of the front right sensors register an approaching obstacle and therefore generate a value, motor $M_\mathrm{R}$ should speed up, while $M_\mathrm{L}$ should reduce its speed, which results in a left turn, away from the obstacle.
+In this scenario, the E-Puck shall provide an obstacle avoidance behavior. Consider the following example as an explanation for the desired functionality: if one of the front right sensors registers an approaching obstacle and therefore generates a value, motor $M_\mathrm{R}$ should speed up, while $M_\mathrm{L}$ should reduce its speed, which results in a left turn, away from the obstacle.
 
 \section{Evolutionary Approach}
 
@@ -95,11 +97,10 @@ In practice, to get a (mostly) unbiased fitness evaluation, the E-Puck should be
 
 \section{Adaptive Learning}
 
-Due to the random mutation, the EA is a undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the evolutionary process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting to changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
-
+Due to the random mutation, the EA is an undirected, and therefore a relatively slow strategy for optimizing an E-Puck Braitenberg Vehicle. The individual makes no learning progress whatsoever, and is eventually killed off by the selection algorithm. Additionally, the evolutionary process heavily depends on the quality of the fitness function, which itself is depending on the current environment. The EA thus has a hard time reacting to changing environments, e.g. placing the robot in a maze with walls of different reflectivity.
 
 To achieve a both adaptive and individual learning process, a combination of controller and value system was implemented, as shown in Fig.~(\ref{fig:adaptivelearningsketch}). The controller provides the basic driving behavior by activating the motors with the current weights according to Eq.~(\ref{eq:motorequation}).
-The value system's task is to simulate reward and punishment for a certain behavior by adjusting the weights, as well as to provide reflexes for specific situations.
+The value system's task is to correct the BV's behavior by adjusting the weights, as well as to provide reflexes for specific situations. %The weight adjustment is able to compensate for varying sensitivities or even damaged sensors.
 
 \begin{figure*}[tbp]
 	\centering
@@ -112,12 +113,12 @@ In this application, the value system reacts to a collision with an obstacle. Us
 \begin{equation}
 	C = \bigvee\limits_{i=0}^{N-1} I_i > \Theta_I. 
 \end{equation}
-During the testing of the adaptive algorithm, the E-Puck eventually got stuck at a convex corner in a way, that both sensor values nearest to said corner did not reach $\Theta$. Therefore, a collision is also assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the readouts of each individual sensor do not show a change bigger than a certain value $\Theta_B$ over a defined time.
+During the testing of the adaptive algorithm, the E-Puck occasionally got stuck at a convex corner in a way, that both sensor values nearest to said corner did not reach $\Theta_I$. Therefore, a collision is also assumed, if both the squared norm of all sensor readouts is above a certain value $\Theta_A$, and the readouts of each individual sensor do not show a change bigger than a certain value $\Theta_B$ over a defined time.
 \begin{equation}
 	C = \sum\limits_{i=0}^{N-1} I_i^2 > \Theta_A \;\wedge\; \sum\limits_{i=0}^{N-1} (\Delta I_i)^2 < \Theta_B.
 \end{equation}
-However, this situation occurs very rarely. 
-Both collision types are countered with a back-off reflex, meaning the robot moves away from the obstacle for a short time period.
+However, this situation occured very rarely. 
+Both collision types are countered with a back-off reflex, meaning the robot moves away from the obstacle for a short period of time.
 
 For the first collision type, the weight of the sensor $I_m$ with the highest value is increased or decreased by a certain value $\Delta w$, depending on which side of the E-Puck the sensor is on, as the right motor's weights are the left motor's weights in reverse order:
 \begin{align}
@@ -132,9 +133,9 @@ the weights are normalized accordingly:
 \begin{equation}
 	w_i \leftarrow w_i \cdot \frac{\Theta_W}{W}.
 \end{equation}
-Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. A value of $\Delta w = 150$ was found suitable. The bias is kept constant at $w_{n,\text{bias}} = 150$.
+Here, a maximum norm of $\Theta_W=3\cdot 10^6$ limits each weight to roughly $1000$. An adjustment value of $\Delta w = 200$ was found suitable. The bias was kept constant at $w_{n,\text{bias}} = 150$.
 
-The frequency of the value system's interventions decreases over time, as the controller adapts better and better. In this scenario, a reasonable controller adaptation was reached after roughly thirty interventions or four minutes. After that, the value system only activates sporadically, to free the E-Puck BV from delicate situations. The adaptive learning therefore is by orders faster than the evolutionary approach.
+The frequency of the value system's interventions decreases over time, as the controller is adjusted better and better. In this scenario, a reasonable controller adaptation was reached after roughly thirty interventions or four minutes. After that, the value system only activates sporadically, to free the E-Puck BV from delicate situations. The adaptive learning therefore is by orders of magnitude faster than the evolutionary approach.
 
 
 \end{document}
